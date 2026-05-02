@@ -3,43 +3,63 @@ import path from "path";
 
 const STORAGE_PATH = path.join(process.cwd(), "storage");
 
-// Read all files
-export const readFiles = () => {
-  return new Promise((resolve, reject) => {
-    fs.readdir(STORAGE_PATH, (err, files) => {
-      if (err) return reject(err);
-      resolve(files);
-    });
-  });
+/**
+ * Read entries in the storage folder.
+ * Returns an array of filenames (or directory names) present in storage.
+ */
+export const readFiles = async () => {
+  return fs.promises.readdir(STORAGE_PATH);
 };
 
-// Check file exists
+/**
+ * Synchronously check whether a given relative filename exists inside storage.
+ * @param {string} filename - path relative to the storage folder
+ * @returns {boolean}
+ */
 export const fileExists = (filename) => {
-  const filePath = path.join(STORAGE_PATH, filename);
-  return fs.existsSync(filePath);
+  try {
+    return fs.existsSync(safePath(filename));
+  } catch {
+    return false;
+  }
 };
 
-// Get full file path
+/**
+ * Resolve a filename to an absolute path inside the storage folder.
+ */
 export const getFilePath = (filename) => {
-  return path.join(STORAGE_PATH, filename);
+  return safePath(filename);
 };
 
-// Rename file
-export const renameFileUtil = (oldName, newName) => {
+/**
+ * Rename a file inside storage. Returns a Promise that resolves on success.
+ */
+export const renameFileUtil = async (oldName, newName) => {
+  await fs.promises.rename(getFilePath(oldName), getFilePath(newName));
+};
+
+/**
+ * Delete a file inside storage. Returns a Promise that resolves on success.
+ */
+export const deleteFileUtil = async (filename) => {
+  await fs.promises.unlink(getFilePath(filename));
+};
+
+export const createDirectory = (dirPath) => {
   return new Promise((resolve, reject) => {
-    fs.rename(getFilePath(oldName), getFilePath(newName), (err) => {
+    fs.mkdir(getFilePath(dirPath), { recursive: true }, (err) => {
       if (err) return reject(err);
       resolve();
     });
   });
 };
 
-// Delete file
-export const deleteFileUtil = (filename) => {
-  return new Promise((resolve, reject) => {
-    fs.unlink(getFilePath(filename), (err) => {
-      if (err) return reject(err);
-      resolve();
-    });
-  });
+export const safePath = (userPath) => {
+  const resolvedPath = path.resolve(STORAGE_PATH, userPath);
+
+  if (!resolvedPath.startsWith(STORAGE_PATH)) {
+    throw new Error("Invalid path");
+  }
+
+  return resolvedPath;
 };
