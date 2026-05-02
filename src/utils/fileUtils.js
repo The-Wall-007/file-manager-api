@@ -24,11 +24,6 @@ export const getFilePath = (filename) => {
   return path.join(STORAGE_PATH, filename);
 };
 
-// Check existence
-export const fileExists = (filename) => {
-  return fs.existsSync(getFilePath(filename));
-};
-
 // Rename file
 export const renameFileUtil = (oldName, newName) => {
   return new Promise((resolve, reject) => {
